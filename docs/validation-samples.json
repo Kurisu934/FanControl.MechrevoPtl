@@ -1,0 +1,436 @@
+{
+  "description": "Field-whitelisted samples; personal paths, absolute times, process identifiers and exceptions excluded.",
+  "runs": [
+    {
+      "test": "plugin-pwm-test",
+      "date": "2026-10-12",
+      "samples": [
+        {
+          "elapsed_seconds": 0.0,
+          "stage": "ReadOnly",
+          "fan0_rpm": 2675.0,
+          "fan1_rpm": 2594.0
+        },
+        {
+          "elapsed_seconds": 1.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 4889.0,
+          "fan1_rpm": 4791.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 2.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5158.0,
+          "fan1_rpm": 4956.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 4.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5170.0,
+          "fan1_rpm": 4956.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 5.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5146.0,
+          "fan1_rpm": 4956.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 6.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5170.0,
+          "fan1_rpm": 4979.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 7.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5170.0,
+          "fan1_rpm": 4956.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 8.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5170.0,
+          "fan1_rpm": 4991.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 9.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5183.0,
+          "fan1_rpm": 4968.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 10.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6655.0,
+          "fan1_rpm": 6455.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 12.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6759.0,
+          "fan1_rpm": 6475.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 13.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6696.0,
+          "fan1_rpm": 6534.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 14.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6738.0,
+          "fan1_rpm": 6534.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 15.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6780.0,
+          "fan1_rpm": 6514.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 16.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6717.0,
+          "fan1_rpm": 6553.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 17.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6780.0,
+          "fan1_rpm": 6553.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 18.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6780.0,
+          "fan1_rpm": 6514.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 19.0,
+          "stage": "AfterReset",
+          "fan0_rpm": 6780.0,
+          "fan1_rpm": 6534.0
+        },
+        {
+          "elapsed_seconds": 22.0,
+          "stage": "BeforeClose",
+          "fan0_rpm": 5220.0,
+          "fan1_rpm": 5037.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 22.0,
+          "stage": "ReopenedReadOnly",
+          "fan0_rpm": 5195.0,
+          "fan1_rpm": 5026.0
+        },
+        {
+          "elapsed_seconds": 30.0,
+          "stage": "AfterCloseAutomatic",
+          "fan0_rpm": 2501.0,
+          "fan1_rpm": 2303.0
+        }
+      ]
+    },
+    {
+      "test": "protocol-pwm-rpm-test",
+      "date": "2026-10-12",
+      "samples": [
+        {
+          "elapsed_seconds": 0.0,
+          "stage": "Before",
+          "fan0_rpm": 0,
+          "fan1_rpm": 0
+        },
+        {
+          "elapsed_seconds": 2.0,
+          "stage": "PWM192",
+          "fan0_rpm": 6160,
+          "fan1_rpm": 6073
+        },
+        {
+          "elapsed_seconds": 3.0,
+          "stage": "PWM192",
+          "fan0_rpm": 6717,
+          "fan1_rpm": 6494
+        },
+        {
+          "elapsed_seconds": 4.0,
+          "stage": "PWM192",
+          "fan0_rpm": 6717,
+          "fan1_rpm": 6494
+        },
+        {
+          "elapsed_seconds": 5.0,
+          "stage": "PWM192",
+          "fan0_rpm": 6738,
+          "fan1_rpm": 6514
+        },
+        {
+          "elapsed_seconds": 6.0,
+          "stage": "PWM192",
+          "fan0_rpm": 6738,
+          "fan1_rpm": 6494
+        },
+        {
+          "elapsed_seconds": 7.0,
+          "stage": "PWM128",
+          "fan0_rpm": 5297,
+          "fan1_rpm": 5073
+        },
+        {
+          "elapsed_seconds": 8.0,
+          "stage": "PWM128",
+          "fan0_rpm": 5195,
+          "fan1_rpm": 5014
+        },
+        {
+          "elapsed_seconds": 9.0,
+          "stage": "PWM128",
+          "fan0_rpm": 5195,
+          "fan1_rpm": 5026
+        },
+        {
+          "elapsed_seconds": 11.0,
+          "stage": "PWM128",
+          "fan0_rpm": 5208,
+          "fan1_rpm": 5014
+        },
+        {
+          "elapsed_seconds": 12.0,
+          "stage": "PWM128",
+          "fan0_rpm": 5208,
+          "fan1_rpm": 5014
+        },
+        {
+          "elapsed_seconds": 13.0,
+          "stage": "RPM4000",
+          "fan0_rpm": 4391,
+          "fan1_rpm": 4295
+        },
+        {
+          "elapsed_seconds": 14.0,
+          "stage": "RPM4000",
+          "fan0_rpm": 3857,
+          "fan1_rpm": 3906
+        },
+        {
+          "elapsed_seconds": 15.0,
+          "stage": "RPM4000",
+          "fan0_rpm": 3993,
+          "fan1_rpm": 3985
+        },
+        {
+          "elapsed_seconds": 16.0,
+          "stage": "RPM4000",
+          "fan0_rpm": 3927,
+          "fan1_rpm": 4000
+        },
+        {
+          "elapsed_seconds": 17.0,
+          "stage": "RPM4000",
+          "fan0_rpm": 3941,
+          "fan1_rpm": 3993
+        },
+        {
+          "elapsed_seconds": 18.0,
+          "stage": "RPM4000",
+          "fan0_rpm": 3934,
+          "fan1_rpm": 3978
+        },
+        {
+          "elapsed_seconds": 19.0,
+          "stage": "RPM4000",
+          "fan0_rpm": 3934,
+          "fan1_rpm": 3993
+        },
+        {
+          "elapsed_seconds": 20.0,
+          "stage": "RPM4000",
+          "fan0_rpm": 3934,
+          "fan1_rpm": 3970
+        },
+        {
+          "elapsed_seconds": 22.0,
+          "stage": "RPM4000",
+          "fan0_rpm": 3920,
+          "fan1_rpm": 3993
+        },
+        {
+          "elapsed_seconds": 23.0,
+          "stage": "RPM6000",
+          "fan0_rpm": 4813,
+          "fan1_rpm": 4739
+        },
+        {
+          "elapsed_seconds": 24.0,
+          "stage": "RPM6000",
+          "fan0_rpm": 5956,
+          "fan1_rpm": 5891
+        },
+        {
+          "elapsed_seconds": 25.0,
+          "stage": "RPM6000",
+          "fan0_rpm": 5956,
+          "fan1_rpm": 5956
+        },
+        {
+          "elapsed_seconds": 26.0,
+          "stage": "RPM6000",
+          "fan0_rpm": 5940,
+          "fan1_rpm": 5956
+        },
+        {
+          "elapsed_seconds": 27.0,
+          "stage": "RPM6000",
+          "fan0_rpm": 5940,
+          "fan1_rpm": 5907
+        },
+        {
+          "elapsed_seconds": 28.0,
+          "stage": "RPM6000",
+          "fan0_rpm": 5923,
+          "fan1_rpm": 5956
+        },
+        {
+          "elapsed_seconds": 29.0,
+          "stage": "RPM6000",
+          "fan0_rpm": 5940,
+          "fan1_rpm": 5940
+        },
+        {
+          "elapsed_seconds": 30.0,
+          "stage": "RPM6000",
+          "fan0_rpm": 5972,
+          "fan1_rpm": 5940
+        },
+        {
+          "elapsed_seconds": 31.0,
+          "stage": "RPM6000",
+          "fan0_rpm": 5972,
+          "fan1_rpm": 5940
+        },
+        {
+          "elapsed_seconds": 33.0,
+          "stage": "AutoRestored",
+          "fan0_rpm": 5780,
+          "fan1_rpm": 5750
+        },
+        {
+          "elapsed_seconds": 34.0,
+          "stage": "AutoRestored",
+          "fan0_rpm": 5500,
+          "fan1_rpm": 5472
+        },
+        {
+          "elapsed_seconds": 35.0,
+          "stage": "AutoRestored",
+          "fan0_rpm": 5233,
+          "fan1_rpm": 5195
+        },
+        {
+          "elapsed_seconds": 36.0,
+          "stage": "AutoRestored",
+          "fan0_rpm": 4900,
+          "fan1_rpm": 4934
+        },
+        {
+          "elapsed_seconds": 37.0,
+          "stage": "AutoRestored",
+          "fan0_rpm": 4568,
+          "fan1_rpm": 4597
+        }
+      ]
+    },
+    {
+      "test": "independent-rpm-test",
+      "date": "2026-10-12",
+      "samples": [
+        {
+          "elapsed_seconds": 0.0,
+          "stage": "Before",
+          "fan0_rpm": 0,
+          "fan1_rpm": 0
+        },
+        {
+          "elapsed_seconds": 1.0,
+          "stage": "Manual",
+          "fan0_rpm": 1225,
+          "fan1_rpm": 1292
+        },
+        {
+          "elapsed_seconds": 2.0,
+          "stage": "Manual",
+          "fan0_rpm": 2898,
+          "fan1_rpm": 2921
+        },
+        {
+          "elapsed_seconds": 3.0,
+          "stage": "Manual",
+          "fan0_rpm": 4195,
+          "fan1_rpm": 4400
+        },
+        {
+          "elapsed_seconds": 4.0,
+          "stage": "Manual",
+          "fan0_rpm": 3970,
+          "fan1_rpm": 5571
+        },
+        {
+          "elapsed_seconds": 5.0,
+          "stage": "Manual",
+          "fan0_rpm": 3927,
+          "fan1_rpm": 6039
+        },
+        {
+          "elapsed_seconds": 6.0,
+          "stage": "Manual",
+          "fan0_rpm": 3941,
+          "fan1_rpm": 5923
+        },
+        {
+          "elapsed_seconds": 7.0,
+          "stage": "Manual",
+          "fan0_rpm": 3934,
+          "fan1_rpm": 5923
+        },
+        {
+          "elapsed_seconds": 8.0,
+          "stage": "Manual",
+          "fan0_rpm": 3934,
+          "fan1_rpm": 5956
+        },
+        {
+          "elapsed_seconds": 9.0,
+          "stage": "Manual",
+          "fan0_rpm": 3956,
+          "fan1_rpm": 5956
+        },
+        {
+          "elapsed_seconds": 9.0,
+          "stage": "AfterRestore",
+          "fan0_rpm": 3934,
+          "fan1_rpm": 5940
+        }
+      ]
+    }
+  ]
+}

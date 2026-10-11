@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <FanControlDirectory Condition="'$(FanControlDirectory)' == ''">$(MSBuildThisFileDirectory)..\references</FanControlDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs;Protocol.cs;Plugin.cs;..\control\MechrevoPtlEc.cs" />
+    <Reference Include="FanControl.Plugins">
+      <HintPath>$(FanControlDirectory)\FanControl.Plugins.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App" />
+  </ItemGroup>
+</Project>

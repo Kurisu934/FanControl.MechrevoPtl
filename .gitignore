@@ -1,0 +1,35 @@
+# Generated output and local dependencies
+**/bin/
+**/obj/
+**/dist/
+**/results/
+/artifacts/
+/references/
+__pycache__/
+.vs/
+.idea/
+*.user
+*.suo
+
+# Firmware, drivers, installers and local machine captures never belong in Git.
+*.bin
+*.rom
+*.aml
+*.sys
+*.dll
+*.exe
+*.pdb
+*.zip
+*.7z
+*.iso
+*.log
+*.txt
+!LICENSE
+!tools/requirements.txt
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+*.snk

@@ -1,0 +1,79 @@
+{
+  "platform": "MECHREVO XINGYAO Series-P916F-PTL",
+  "bios": "1.01",
+  "ec_image_version": "01.01.00",
+  "date": "2026-10-12",
+  "ec_region_sha256": "525a04a0d33e36fe2354eaf2706725afa5990688455cc53591445a1e9cb9041e",
+  "active_ec_flash_hash_verified": false,
+  "ports": {
+    "command_status": "0x6c",
+    "data": "0x68",
+    "ibf_mask": 2,
+    "obf_mask": 1
+  },
+  "commands": {
+    "shared_pwm": {
+      "command": "0xd6",
+      "data": "round(percent * 255 / 100)",
+      "handler": "0xc8ce",
+      "tested_raw": [
+        128,
+        191,
+        192
+      ]
+    },
+    "fan0_rpm": {
+      "command": "0xd7",
+      "data": "round(rpm / 100)",
+      "handler": "0xc8fe",
+      "tested_rpm": [
+        4000,
+        6000
+      ]
+    },
+    "fan1_rpm": {
+      "command": "0xd8",
+      "data": "round(rpm / 100)",
+      "handler": "0xc922",
+      "tested_rpm": [
+        4000,
+        6000
+      ]
+    },
+    "restore_auto": {
+      "command": "0xd5",
+      "data": "0x10",
+      "handler": "0xc7f2",
+      "tested": true
+    },
+    "read_fan0_low": {
+      "command": "0xd5",
+      "data": "0x18"
+    },
+    "read_fan0_high": {
+      "command": "0xd5",
+      "data": "0x19"
+    },
+    "read_fan1_low": {
+      "command": "0xd5",
+      "data": "0x16"
+    },
+    "read_fan1_high": {
+      "command": "0xd5",
+      "data": "0x17"
+    },
+    "read_mode": {
+      "command": "0xe7",
+      "data": "0x11"
+    }
+  },
+  "raw_pwm_resolution": 256,
+  "normalized_pwm_step_percent": 0.39215686274509803,
+  "target_rpm_step": 100,
+  "tach_formula": "count == 0 ? 0 : uint16(2156250 / count)",
+  "rpm_bytes_atomic": false,
+  "manual_pwm_bypasses_normal_temperature_curve": true,
+  "motor_sides_identified": false,
+  "implementation": "../control/MechrevoPtlEc.cs",
+  "analysis": "ec-firmware.md"
+}

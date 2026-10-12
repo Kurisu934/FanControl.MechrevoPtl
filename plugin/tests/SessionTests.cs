@@ -8,11 +8,12 @@ public static class SessionTests
     {
         public int Sets, Reads, Restores, Disposals;
         public bool FailSet, FailRead;
-        public int FailRestoreCount;
+        public int FailRestoreCount, UnstableReads;
         public (int, int) ReadFans()
         {
             Reads++;
             if (FailRead) throw new TimeoutException("read timeout");
+            if (UnstableReads-- > 0) throw new RpmSampleUnavailableException();
             return (4000, 6000);
         }
         public int SetPwm(double p)
@@ -60,7 +61,7 @@ public static class SessionTests
         Test("Partially failed Set restores and rejects further writes", () => {
             var h = new Fake { FailSet = true }; using var s = Session(h);
             Throws<TimeoutException>(() => s.Set(50));
-            Throws<InvalidOperationException>(() => s.Set(75));
+            for (int tick = 0; tick < 30; tick++) s.Set(75);
             s.Update();
             Check(s.Faulted && s.Pwm == null && h.Sets == 1 && h.Restores == 1 && h.Reads == 0, "failed setter");
         });
@@ -107,6 +108,62 @@ public static class SessionTests
             var h = new Fake(); using var s = Session(h);
             s.Set(0); Check(s.Pwm == 0, "zero endpoint");
             s.Set(100); Check(s.Pwm == 100, "full endpoint");
+        });
+        Test("Changing RPM sample leaves manual PWM usable and hides stale RPM", () => {
+            var h = new Fake(); using var s = Session(h);
+            s.Update(); s.Set(50); h.UnstableReads = 1; s.Update();
+            Check(!s.Faulted && s.Pwm.HasValue && s.Fan0 == null && s.Fan1 == null && h.Restores == 0, "transient sample disabled control");
+            s.Set(75); s.Update();
+            Check(h.Sets == 2 && s.Pwm > 74 && s.Fan0 == 4000 && s.Fan1 == 6000, "manual control did not recover");
+        });
+        Test("Changing read-only RPM sample does not poison later manual control", () => {
+            var h = new Fake { UnstableReads = 1 }; using var s = Session(h);
+            s.Update(); s.Set(50); s.Update();
+            Check(!s.Faulted && h.Sets == 1 && h.Restores == 0 && s.Fan0 == 4000, "read-only sample blocked manual control");
+        });
+        Test("Persistent RPM sampling changes do not fault or repeat errors", () => {
+            var h = new Fake { UnstableReads = 60 }; var messages = new List<string>();
+            using var s = new FanSession(h, messages.Add);
+            s.Set(50);
+            for (int tick = 0; tick < 60; tick++) { s.Set(75); s.Update(); }
+            Check(!s.Faulted && h.Sets == 61 && h.Reads == 60 && h.Restores == 0 && s.Fan0 == null, "sampling blocked control");
+            Check(messages.Count == 1, "sampling log flooded");
+            s.Update(); Check(s.Fan0 == 4000 && messages.Count == 2, "sampling did not recover");
+        });
+        Test("Successful samples end an unavailable burst", () => {
+            var h = new Fake(); using var s = Session(h);
+            for (int burst = 0; burst < 3; burst++) {
+                h.UnstableReads = 4;
+                for (int tick = 0; tick < 4; tick++) s.Update();
+                s.Update();
+            }
+            s.Set(50); Check(!s.Faulted && h.Sets == 1 && h.Restores == 0, "sampling bursts blocked control");
+        });
+        Test("Transient RPM failures log once per burst and once on recovery", () => {
+            var h = new Fake { UnstableReads = 3 }; var messages = new List<string>();
+            using var s = new FanSession(h, messages.Add);
+            for (int tick = 0; tick < 3; tick++) s.Update();
+            Check(messages.Count == 1, "transient log flooded");
+            s.Update(); Check(messages.Count == 2, "recovery log missing");
+        });
+        Test("RPM sampler prefers coherent retry and uses the correct fan queries", () => {
+            var bytes = new Queue<byte>(new byte[] { 15, 240, 16, 16, 20, 16 });
+            var queries = new List<byte>();
+            int rpm = RpmSampler.Read(q => { queries.Add(q); return bytes.Dequeue(); }, 1);
+            Check(rpm == 4116 && bytes.Count == 0, "coherent retry");
+            Check(string.Join(",", queries) == "23,22,23,23,22,23", "fan1 queries");
+        });
+        Test("RPM sampler tolerates one high-byte step in either direction", () => {
+            foreach (byte after in new byte[] { 14, 16 }) {
+                var bytes = new Queue<byte>(new byte[] { 15, 240, after, 15, 220, after, 15, 200, after });
+                int rpm = RpmSampler.Read(_ => bytes.Dequeue(), 0);
+                Check(rpm == after * 256 + 200 && bytes.Count == 0, "bounded latest sample");
+            }
+        });
+        Test("RPM sampler rejects larger ambiguity without masking transport errors", () => {
+            var bytes = new Queue<byte>(new byte[] { 15, 240, 16, 15, 220, 16, 15, 200, 17 });
+            Throws<RpmSampleUnavailableException>(() => RpmSampler.Read(_ => bytes.Dequeue(), 0));
+            Throws<TimeoutException>(() => RpmSampler.Read(_ => throw new TimeoutException("handshake"), 0));
         });
         return passed.ToArray();
     }

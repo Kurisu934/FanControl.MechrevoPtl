@@ -431,6 +431,155 @@
           "fan1_rpm": 5940
         }
       ]
+    },
+    {
+      "test": "plugin-v0.1.1-host-manual-control",
+      "date": "2026-10-12",
+      "samples": [
+        {
+          "elapsed_seconds": 0.0,
+          "stage": "ReadOnly",
+          "fan0_rpm": 3203.0,
+          "fan1_rpm": 2994.0
+        },
+        {
+          "elapsed_seconds": 1.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5097.0,
+          "fan1_rpm": 4934.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 2.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5259.0,
+          "fan1_rpm": 5061.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 4.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5259.0,
+          "fan1_rpm": 5014.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 5.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5246.0,
+          "fan1_rpm": 5049.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 6.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5246.0,
+          "fan1_rpm": 5037.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 7.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5246.0,
+          "fan1_rpm": 5049.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 8.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5272.0,
+          "fan1_rpm": 5061.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 9.0,
+          "stage": "Pwm50",
+          "fan0_rpm": 5284.0,
+          "fan1_rpm": 5073.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 11.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6759.0,
+          "fan1_rpm": 6553.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 12.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6845.0,
+          "fan1_rpm": 6614.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 13.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6888.0,
+          "fan1_rpm": 6594.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 14.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6845.0,
+          "fan1_rpm": 6614.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 15.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6888.0,
+          "fan1_rpm": 6614.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 16.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6888.0,
+          "fan1_rpm": 6634.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 17.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6867.0,
+          "fan1_rpm": 6634.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 19.0,
+          "stage": "Pwm75",
+          "fan0_rpm": 6867.0,
+          "fan1_rpm": 6655.0,
+          "pwm_percent": 74.90196
+        },
+        {
+          "elapsed_seconds": 19.0,
+          "stage": "AfterReset",
+          "fan0_rpm": 6888.0,
+          "fan1_rpm": 6655.0
+        },
+        {
+          "elapsed_seconds": 22.0,
+          "stage": "BeforeClose",
+          "fan0_rpm": 5310.0,
+          "fan1_rpm": 5121.0,
+          "pwm_percent": 50.19608
+        },
+        {
+          "elapsed_seconds": 22.0,
+          "stage": "ReopenedReadOnly",
+          "fan0_rpm": 5310.0,
+          "fan1_rpm": 5097.0
+        },
+        {
+          "elapsed_seconds": 30.0,
+          "stage": "AfterCloseAutomatic",
+          "fan0_rpm": 4501.0,
+          "fan1_rpm": 4295.0
+        }
+      ]
     }
   ]
 }

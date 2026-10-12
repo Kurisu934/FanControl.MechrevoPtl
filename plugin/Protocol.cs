@@ -86,6 +86,7 @@ public sealed class FanSession : IDisposable
     private readonly IEcHardware hardware;
     private readonly Action<string> log;
     private bool active, disposed, suspended;
+    private bool sampleUnavailable;
     public bool Faulted { get; private set; }
     public float? Pwm { get; private set; }
     public float? Fan0 { get; private set; }
@@ -104,6 +105,15 @@ public sealed class FanSession : IDisposable
             try
             {
                 var fans = hardware.ReadFans(); Fan0 = fans.Fan0; Fan1 = fans.Fan1;
+                if (sampleUnavailable) Log("RPM readings resumed.");
+                sampleUnavailable = false;
+            }
+            catch (RpmSampleUnavailableException)
+            {
+                // A changing sample is distinct from a failed EC transaction. Do not publish stale RPM.
+                Fan0 = Fan1 = null;
+                if (!sampleUnavailable) Log("RPM changed beyond read tolerance; skipped this sample.");
+                sampleUnavailable = true;
             }
             catch (Exception e) { Fail(e); throw; }
         }
@@ -113,8 +123,9 @@ public sealed class FanSession : IDisposable
     {
         lock (gate)
         {
-            if (disposed || suspended) return;
-            if (Faulted) throw new InvalidOperationException("EC control stopped after an error. Refresh the plugin before enabling control again.");
+            // FanControl calls Set every clock tick. The original error was already reported;
+            // faulted callbacks must reject writes without producing an exception every second.
+            if (disposed || Faulted || suspended) return;
             try
             {
                 if (!float.IsFinite(percent) || percent < 0 || percent > 100)

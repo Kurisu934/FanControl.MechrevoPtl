@@ -5,6 +5,38 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Win32.SafeHandles;
 
+// The port transactions succeeded, but separate RPM bytes did not form a stable sample.
+public sealed class RpmSampleUnavailableException : InvalidOperationException
+{
+    public RpmSampleUnavailableException() : base("RPM changed across all coherent-read attempts.") { }
+}
+
+public static class RpmSampler
+{
+    // Adjacent high bytes leave at most one byte (256 RPM) of ambiguity.
+    public const int ToleranceRpm = 256;
+
+    public static int Read(Func<byte, byte> read, int fan)
+    {
+        if (fan != 0 && fan != 1) throw new ArgumentOutOfRangeException(nameof(fan));
+        byte lowQuery = (byte)(fan == 0 ? 0x18 : 0x16);
+        byte highQuery = (byte)(fan == 0 ? 0x19 : 0x17);
+        int? approximate = null;
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            byte before = read(highQuery);
+            byte lo = read(lowQuery);
+            byte after = read(highQuery);
+            if (before == after) return lo + 256 * after;
+            // Prefer a coherent retry. Fall back only to the latest bounded sample.
+            approximate = Math.Abs(after - before) * 256 <= ToleranceRpm
+                ? lo + 256 * after : null;
+        }
+        if (approximate.HasValue) return approximate.Value;
+        throw new RpmSampleUnavailableException();
+    }
+}
+
 // Protocol recovered from this machine's EC 01.01.00 and verified on 2026-10-12.
 // No driver installation, physical-memory access, or firmware flashing.
 public sealed class MechrevoPtlEc : IDisposable
@@ -81,19 +113,8 @@ public sealed class MechrevoPtlEc : IDisposable
     public byte ReadCustomFlag() { return Exchange(0xd5, 0x12, true); }
     public int ReadRpm(int fan)
     {
-        if (fan != 0 && fan != 1) throw new ArgumentOutOfRangeException("fan");
-        byte lowQuery = (byte)(fan == 0 ? 0x18 : 0x16);
-        byte highQuery = (byte)(fan == 0 ? 0x19 : 0x17);
         // EC updates a 16-bit value, but PM2 returns one byte per query.
-        // Reject a sample whose high byte changed around the low-byte read.
-        for (int attempt = 0; attempt < 3; attempt++)
-        {
-            byte before = Exchange(0xd5, highQuery, true);
-            byte lo = Exchange(0xd5, lowQuery, true);
-            byte after = Exchange(0xd5, highQuery, true);
-            if (before == after) return lo + 256 * after;
-        }
-        throw new InvalidOperationException("RPM changed across all coherent-read attempts.");
+        return RpmSampler.Read(query => Exchange(0xd5, query, true), fan);
     }
     public int SetPwmPercent(double percent)
     {

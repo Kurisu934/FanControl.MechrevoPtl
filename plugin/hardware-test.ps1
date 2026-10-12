@@ -11,7 +11,7 @@ $resolved = Resolve-FanControlReferences $FanControlDirectory $SystemEventsAssem
 $api = $resolved.Api
 $dll = Join-Path $PSScriptRoot 'dist\FanControl.MechrevoPtl.dll'
 Add-Type -Path $api, $resolved.SystemEvents, $dll, $resolved.Library
-$references = @((Get-ChildItem -LiteralPath (Join-Path $PSHOME 'ref') -Filter '*.dll').FullName) + $api
+$references = @((Get-ChildItem -LiteralPath (Join-Path $PSHOME 'ref') -Filter '*.dll').FullName) + @($api, $resolved.Library, $dll)
 Add-Type -Path (Join-Path $PSScriptRoot 'tests\HostStubs.cs') -ReferencedAssemblies $references
 $logger = [SmokeLogger]::new()
 $plugin = [FanControl.MechrevoPtl.Plugin]::new($logger)
@@ -42,9 +42,13 @@ try {
     Sample 'ReadOnly'
     if ($null -ne $container.ControlSensors[0].Value) { throw 'Read-only initialization activated PWM.' }
     if ($ExerciseControl) {
+        $manualConfig = [HostManualChecks]::Config(50)
+        $hostControl = [HostManualChecks]::Create($wrappedControl, $manualConfig)
+        try {
         foreach ($percent in @(50, 75)) {
-            $container.ControlSensors[0].Set($percent)
-            for ($i = 0; $i -lt 8; $i++) { Start-Sleep -Seconds 1; Sample "Pwm$percent" }
+            $manualConfig.ManualControlValue = $percent
+            $hostControl.UpdateConfig($manualConfig)
+            for ($i = 0; $i -lt 8; $i++) { $hostControl.Update(); Start-Sleep -Seconds 1; Sample "Pwm$percent" }
         }
         $at50 = @($result.Samples | Where-Object Stage -eq 'Pwm50')[-1]
         $at75 = @($result.Samples | Where-Object Stage -eq 'Pwm75')[-1]
@@ -52,6 +56,8 @@ try {
             $at75.Fan0Rpm -lt ($at50.Fan0Rpm + 500) -or $at75.Fan1Rpm -lt ($at50.Fan1Rpm + 500)) {
             throw 'RPM did not respond as expected to the verified 50/75% settings.'
         }
+        } finally { $hostControl.Dispose() }
+        $result.HostManualControl = 'Passed: Control.Update at 50% and 75%'
         $container.ControlSensors[0].Reset()
         Sample 'AfterReset'
         if ($null -ne $container.ControlSensors[0].Value) { throw 'Reset retained a manual value.' }

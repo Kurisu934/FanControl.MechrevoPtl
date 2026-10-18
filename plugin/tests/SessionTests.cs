@@ -6,9 +6,10 @@ public static class SessionTests
 {
     private sealed class Fake : IEcHardware
     {
-        public int Sets, Reads, Restores, Disposals;
-        public bool FailSet, FailRead;
+        public int Sets, Reads, Restores, Disposals, Synchronizations;
+        public bool FailSet, FailRead, FailSync;
         public int FailRestoreCount, UnstableReads;
+        public List<string> Events = new();
         public (int, int) ReadFans()
         {
             Reads++;
@@ -24,8 +25,15 @@ public static class SessionTests
         }
         public void RestoreAutomatic()
         {
+            Events.Add("Restore");
             Restores++;
             if (FailRestoreCount-- > 0) throw new TimeoutException("restore timeout");
+        }
+        public void Synchronize()
+        {
+            Events.Add("Sync");
+            Synchronizations++;
+            if (FailSync) throw new TimeoutException("sync timeout");
         }
         public void Dispose() { Disposals++; }
     }
@@ -192,6 +200,44 @@ public static class SessionTests
             int reads = 0;
             Throws<InvalidOperationException>(() => EcStartupSync.Synchronize(() => 1, () => { reads++; return 42; }, _ => { }));
             Check(reads == 1, "unbounded drain");
+        });
+        Test("Pending output is synchronized and retried once before a command write", () => {
+            int calls = 0, writes = 0, syncs = 0;
+            int value = EcTransactionRecovery.Execute(() => { if (++calls == 1) throw new EcOutputPendingException(); writes++; return 128; }, () => syncs++);
+            Check(value == 128 && calls == 2 && writes == 1 && syncs == 1, "pre-command recovery");
+        });
+        Test("Repeated pending output is not retried indefinitely", () => {
+            int calls = 0, syncs = 0;
+            Throws<EcOutputPendingException>(() => EcTransactionRecovery.Execute<int>(() => { calls++; throw new EcOutputPendingException(); }, () => syncs++));
+            Check(calls == 2 && syncs == 1, "retry limit");
+        });
+        Test("Failed synchronization prevents replay", () => {
+            int calls = 0;
+            Throws<TimeoutException>(() => EcTransactionRecovery.Execute<int>(() => { calls++; throw new EcOutputPendingException(); }, () => throw new TimeoutException("sync timeout")));
+            Check(calls == 1, "replayed without synchronization");
+        });
+        Test("Timeouts after a command are never automatically replayed", () => {
+            int writes = 0, syncs = 0;
+            Throws<TimeoutException>(() => EcTransactionRecovery.Execute<int>(() => { writes++; throw new TimeoutException("write result unknown"); }, () => syncs++));
+            Check(writes == 1 && syncs == 0, "uncertain command replayed");
+        });
+        Test("Failure cleanup synchronizes before restoring and runs only once", () => {
+            var h = new Fake(); using var s = Session(h);
+            s.Set(50); h.FailRead = true; Throws<TimeoutException>(s.Update);
+            for (int tick = 0; tick < 30; tick++) { s.Update(); s.Set(75); }
+            Check(h.Synchronizations == 1 && h.Restores == 1 && h.Sets == 1 && s.Faulted, "failure cleanup repeated");
+            Check(string.Join(",", h.Events) == "Sync,Restore", "cleanup did not precede restore");
+        });
+        Test("Cleanup failure cannot prevent automatic restore or replace the original error", () => {
+            var h = new Fake { FailSync = true, FailSet = true }; using var s = Session(h);
+            try { s.Set(50); throw new Exception("missing failure"); }
+            catch (TimeoutException e) { Check(e.Message == "partial write", "original failure lost"); }
+            Check(h.Synchronizations == 1 && h.Restores == 1 && s.Faulted, "restore skipped");
+        });
+        Test("Invalid values never perform communication cleanup", () => {
+            var h = new Fake(); using var s = Session(h);
+            Throws<ArgumentOutOfRangeException>(() => s.Set(-1));
+            Check(h.Synchronizations == 0 && h.Sets == 0 && h.Restores == 0, "invalid value touched EC");
         });
         return passed.ToArray();
     }

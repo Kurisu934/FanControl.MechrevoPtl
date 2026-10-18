@@ -62,6 +62,7 @@ public static class HostManualChecks
             return (int)Math.Round(percent * 255 / 100, MidpointRounding.AwayFromZero);
         }
         public void RestoreAutomatic() { Restores++; }
+        public void Synchronize() { }
         public void Dispose() { }
     }
 

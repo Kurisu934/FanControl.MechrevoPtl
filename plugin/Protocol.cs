@@ -10,6 +10,7 @@ public interface IEcHardware : IDisposable
 {
     (int Fan0, int Fan1) ReadFans();
     int SetPwm(double percent);
+    void Synchronize();
     void RestoreAutomatic();
 }
 
@@ -18,10 +19,13 @@ public sealed class NativeEcHardware : IEcHardware
     public const string MutexName = @"Local\MechrevoPtlFanDiagnostic";
     public const string DriverHash = "F8965FDCE668692C3785AFA3559159F9A18287BC0D53ABB21902895A8ECF221B";
     private readonly MechrevoPtlEc ec;
+    private readonly Action<string>? log;
     public int StartupDiscardedBytes { get; }
 
-    public NativeEcHardware()
+    public NativeEcHardware() : this(null) { }
+    public NativeEcHardware(Action<string>? log)
     {
+        this.log = log;
         ValidatePlatform();
         ec = new MechrevoPtlEc();
         try
@@ -69,15 +73,28 @@ public sealed class NativeEcHardware : IEcHardware
         finally { mutex.ReleaseMutex(); }
     }
 
-    public (int Fan0, int Fan1) ReadFans() => WithMutex(() =>
+    private T WithRecoveryLog<T>(Func<T> action, int timeout = 100) => WithMutex(() =>
+    {
+        int before = ec.RecoveredTransactions;
+        try { return action(); }
+        finally
+        {
+            int recovered = ec.RecoveredTransactions - before;
+            if (recovered != 0)
+                try { log?.Invoke("EC pending-output recovery completed for " + recovered + " transaction(s)."); } catch { }
+        }
+    }, timeout);
+
+    public (int Fan0, int Fan1) ReadFans() => WithRecoveryLog(() =>
     {
         int a = ec.ReadRpm(0), b = ec.ReadRpm(1);
         if (a > 16000 || b > 16000)
             throw new InvalidOperationException("EC returned an implausible RPM sample.");
         return (a, b);
     });
-    public int SetPwm(double percent) => WithMutex(() => ec.SetPwmPercent(percent));
-    public void RestoreAutomatic() => WithMutex(() => { ec.RestoreAutomatic(); return 0; }, 1000);
+    public int SetPwm(double percent) => WithRecoveryLog(() => ec.SetPwmPercent(percent));
+    public void Synchronize() => WithMutex(() => ec.SynchronizeBuffer(), 1000);
+    public void RestoreAutomatic() => WithRecoveryLog(() => { ec.RestoreAutomatic(); return 0; }, 1000);
     public void Dispose() => ec.Dispose();
 }
 
@@ -174,6 +191,12 @@ public sealed class FanSession : IDisposable
     {
         Faulted = true; Pwm = Fan0 = Fan1 = null;
         Log("Control stopped: " + e.Message);
+        // Argument validation never touched the port. Other failures may have left a response unread.
+        if (e is not ArgumentException)
+        {
+            try { hardware.Synchronize(); Log("EC communication synchronized after failure."); }
+            catch (Exception syncError) { Log("EC failure cleanup could not synchronize: " + syncError.Message); }
+        }
         try { Restore(); }
         catch (Exception restoreError)
         {

@@ -21,7 +21,7 @@ public sealed class Plugin : IPlugin3
         NativeEcHardware? hardware = null;
         try
         {
-            hardware = new NativeEcHardware();
+            hardware = new NativeEcHardware(Log);
             if (hardware.StartupDiscardedBytes != 0)
                 Log("Startup synchronization cleared one pending EC response byte.");
             session = new FanSession(hardware, Log);

@@ -11,6 +11,25 @@ public sealed class RpmSampleUnavailableException : InvalidOperationException
     public RpmSampleUnavailableException() : base("RPM changed across all coherent-read attempts.") { }
 }
 
+// Raised only before any byte of the new command has been written.
+public sealed class EcOutputPendingException : InvalidOperationException
+{
+    public EcOutputPendingException() : base("EC PM2 output is pending before the next transaction.") { }
+}
+
+public static class EcTransactionRecovery
+{
+    public static T Execute<T>(Func<T> transaction, Action synchronize)
+    {
+        try { return transaction(); }
+        catch (EcOutputPendingException)
+        {
+            synchronize();
+            return transaction(); // One retry; exceptions here propagate without another recovery.
+        }
+    }
+}
+
 public static class RpmSampler
 {
     // Adjacent high bytes leave at most one byte (256 RPM) of ambiguity.
@@ -39,7 +58,7 @@ public static class RpmSampler
 
 public static class EcStartupSync
 {
-    // Only at session startup, under the caller's mutex. Never drain during a transaction.
+    // Only between transactions, under the caller's mutex. Never drain an in-flight transaction.
     public static int Synchronize(Func<byte> status, Func<byte> readOutput, Action<int> pause)
     {
         byte current = status();
@@ -82,6 +101,7 @@ public sealed class MechrevoPtlEc : IDisposable
         byte[] input, int inputSize, byte[] output, int outputSize,
         out int returned, IntPtr overlapped);
     private readonly SafeFileHandle handle;
+    public int RecoveredTransactions { get; private set; }
 
     public MechrevoPtlEc()
     {
@@ -121,7 +141,8 @@ public sealed class MechrevoPtlEc : IDisposable
         return s;
     }
 
-    public int SynchronizeStartup() => EcStartupSync.Synchronize(Status, () => ReadPort(0x68), Thread.Sleep);
+    public int SynchronizeBuffer() => EcStartupSync.Synchronize(Status, () => ReadPort(0x68), Thread.Sleep);
+    public int SynchronizeStartup() => SynchronizeBuffer();
 
     private void Wait(byte mask, byte expected)
     {
@@ -135,9 +156,21 @@ public sealed class MechrevoPtlEc : IDisposable
 
     private byte Exchange(byte command, byte parameter, bool response)
     {
+        bool synchronized = false;
+        byte value = EcTransactionRecovery.Execute(() => ExchangeOnce(command, parameter, response), () =>
+        {
+            SynchronizeBuffer();
+            synchronized = true;
+        });
+        if (synchronized) RecoveredTransactions++;
+        return value;
+    }
+
+    private byte ExchangeOnce(byte command, byte parameter, bool response)
+    {
         Wait(2, 0);
         if ((Status() & 1) != 0)
-            throw new InvalidOperationException("EC PM2 output belongs to another transaction.");
+            throw new EcOutputPendingException();
         WritePort(0x6c, command); Wait(2, 0);
         WritePort(0x68, parameter);
         if (!response) { Wait(2, 0); return 0; }

@@ -12,7 +12,7 @@ $logPath=Join-Path $logDir ((Get-Date -Format 'yyyyMMdd-HHmmss')+'-'+[guid]::New
 $result=[ordered]@{Time=(Get-Date).ToString('o');Mode=$Mode;State='Starting';Error=$null;Samples=@();RestoreSent=$false}
 function Save-Result {$result|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $logPath -Encoding UTF8}
 Save-Result
-$ownsMutex=$false;$ec=$null;$mutex=$null
+$ownsMutex=$false;$ec=$null;$mutex=$null;$controlAttempted=$false
 try {
     if($Mode -eq 'Pwm' -and ($null -eq $Percent -or $Percent -lt 0 -or $Percent -gt 100 -or [double]::IsNaN($Percent))){throw 'Pwm requires -Percent 0..100.'}
     if($Mode -eq 'Rpm' -and ($null -eq $Rpm0 -and $null -eq $Rpm1)){throw 'Rpm requires -Rpm0 and/or -Rpm1.'}
@@ -40,6 +40,7 @@ try {
         if($result.OriginalCustomFlag -ne 0){throw 'EC is already using a custom curve; this temporary tool expects automatic control.'}
         $result.State='Controlling';Save-Result
         try {
+            $controlAttempted=$true
             if($Mode -eq 'Pwm'){$result.RawPwm=$ec.SetPwmPercent($Percent);$result.EffectivePercent=$result.RawPwm*100.0/255}
             if($Mode -eq 'Rpm'){
                 if($null -ne $Rpm0){$result.TargetRpm0=$ec.SetRpm(0,$Rpm0)}
@@ -47,13 +48,29 @@ try {
             }
             $timer=[Diagnostics.Stopwatch]::StartNew();Save-Result
             while($timer.Elapsed.TotalSeconds -lt $Seconds){Start-Sleep -Milliseconds 900;$sample=Get-Sample 'Manual';$result.Samples+=$sample;Save-Result;[pscustomobject]$sample|Format-Table -AutoSize}
-        } finally {$ec.RestoreAutomatic();$result.RestoreSent=$true;$result.RestoreTime=(Get-Date).ToString('o');Save-Result}
+        } catch {$result.ControlError=$_.Exception.ToString();throw}
+        finally {
+            try {$ec.RestoreAutomatic();$result.RestoreSent=$true;$result.RestoreTime=(Get-Date).ToString('o')}
+            catch {$result.RestoreError=$_.Exception.Message;if(-not $result.ControlError){throw}}
+            Save-Result
+        }
         $result.Samples+=Get-Sample 'AfterRestore'
     }
     $result.FinalMode=$ec.ReadMode();$result.FinalCustomFlag=$ec.ReadCustomFlag();$result.State='Finished'
 } catch {$result.State='Failed';$result.Error=$_.Exception.ToString()}
 finally {
-    if($ec){$ec.Dispose()}
+    if($ec){
+        if($result.State -eq 'Failed'){
+            try {$result.FailureCleanupDiscardedBytes=$ec.SynchronizeBuffer()}
+            catch {$result.FailureCleanupError=$_.Exception.Message}
+            if($controlAttempted -and -not $result.RestoreSent){
+                try {$ec.RestoreAutomatic();$result.RestoreSent=$true;$result.RestoreTime=(Get-Date).ToString('o')}
+                catch {$result.RestoreError=$_.Exception.Message}
+            }
+        }
+        $result.RecoveredTransactions=$ec.RecoveredTransactions
+        $ec.Dispose()
+    }
     if($ownsMutex){$mutex.ReleaseMutex()}
     if($mutex){$mutex.Dispose()}
     Save-Result

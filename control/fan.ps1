@@ -30,6 +30,7 @@ try {
     try {$ownsMutex=$mutex.WaitOne($(if($Mode -eq 'Auto'){10000}else{0}))} catch [Threading.AbandonedMutexException] {$ownsMutex=$true}
     if(-not $ownsMutex){throw 'Another fan control operation is active.'}
     $ec=[MechrevoPtlEc]::new()
+    $result.StartupDiscardedBytes=$ec.SynchronizeStartup()
     function Get-Sample([string]$Stage){[ordered]@{Time=(Get-Date).ToString('o');Stage=$Stage;Fan0Rpm=$ec.ReadRpm(0);Fan1Rpm=$ec.ReadRpm(1)}}
     $result.OriginalMode=$ec.ReadMode();$result.OriginalCustomFlag=$ec.ReadCustomFlag()
     if($result.OriginalMode -lt 1 -or $result.OriginalMode -gt 4){throw 'EC mode response does not match the verified protocol.'}

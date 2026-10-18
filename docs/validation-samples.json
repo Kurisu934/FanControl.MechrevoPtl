@@ -580,6 +580,64 @@
           "fan1_rpm": 4295.0
         }
       ]
+    },
+    {
+      "test": "plugin-v0.1.2-startup-sync-readonly",
+      "date": "2026-10-18",
+      "pm2_status_before": 1,
+      "startup_discarded_bytes": 1,
+      "samples": [
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2875,
+          "fan1_rpm": 2782
+        },
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2886,
+          "fan1_rpm": 2775
+        },
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2886,
+          "fan1_rpm": 2778
+        },
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2878,
+          "fan1_rpm": 2778
+        },
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2878,
+          "fan1_rpm": 2782
+        },
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2875,
+          "fan1_rpm": 2785
+        },
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2886,
+          "fan1_rpm": 2778
+        },
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2878,
+          "fan1_rpm": 2778
+        },
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2886,
+          "fan1_rpm": 2771
+        },
+        {
+          "stage": "ReadOnly",
+          "fan0_rpm": 2878,
+          "fan1_rpm": 2771
+        }
+      ]
     }
   ]
 }

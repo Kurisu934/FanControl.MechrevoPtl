@@ -37,6 +37,39 @@ public static class RpmSampler
     }
 }
 
+public static class EcStartupSync
+{
+    // Only at session startup, under the caller's mutex. Never drain during a transaction.
+    public static int Synchronize(Func<byte> status, Func<byte> readOutput, Action<int> pause)
+    {
+        byte current = status();
+        int waits = 0;
+        while ((current & 2) != 0)
+        {
+            if (++waits > 200) throw new TimeoutException("EC PM2 input remained busy at startup.");
+            pause(5); current = status();
+        }
+        if ((current & 1) == 0) return 0;
+
+        // Give a live reader 100 ms to collect its response. Input activity means contention.
+        for (int i = 0; i < 20; i++)
+        {
+            pause(5); current = status();
+            if ((current & 2) != 0)
+                throw new InvalidOperationException("EC PM2 activity detected during startup synchronization.");
+            if ((current & 1) == 0) return 0;
+        }
+        readOutput(); // At most one pending byte, never an unbounded drain loop.
+        for (int i = 0; i < 4; i++)
+        {
+            pause(5);
+            if ((status() & 3) != 0)
+                throw new InvalidOperationException("EC PM2 did not remain idle after startup synchronization.");
+        }
+        return 1;
+    }
+}
+
 // Protocol recovered from this machine's EC 01.01.00 and verified on 2026-10-12.
 // No driver installation, physical-memory access, or firmware flashing.
 public sealed class MechrevoPtlEc : IDisposable
@@ -87,6 +120,8 @@ public sealed class MechrevoPtlEc : IDisposable
         if (s == 255) throw new InvalidOperationException("EC PM2 port returned 0xff.");
         return s;
     }
+
+    public int SynchronizeStartup() => EcStartupSync.Synchronize(Status, () => ReadPort(0x68), Thread.Sleep);
 
     private void Wait(byte mask, byte expected)
     {

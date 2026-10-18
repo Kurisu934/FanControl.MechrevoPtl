@@ -18,6 +18,7 @@ public sealed class NativeEcHardware : IEcHardware
     public const string MutexName = @"Local\MechrevoPtlFanDiagnostic";
     public const string DriverHash = "F8965FDCE668692C3785AFA3559159F9A18287BC0D53ABB21902895A8ECF221B";
     private readonly MechrevoPtlEc ec;
+    public int StartupDiscardedBytes { get; }
 
     public NativeEcHardware()
     {
@@ -25,14 +26,15 @@ public sealed class NativeEcHardware : IEcHardware
         ec = new MechrevoPtlEc();
         try
         {
-            WithMutex(() =>
+            StartupDiscardedBytes = WithMutex(() =>
             {
+                int discarded = ec.SynchronizeStartup();
                 int mode = ec.ReadMode();
                 if (mode < 1 || mode > 3)
                     throw new InvalidOperationException("EC mode does not match the validated protocol.");
                 if (ec.ReadCustomFlag() != 0)
                     throw new InvalidOperationException("EC custom curve is active.");
-                return 0;
+                return discarded;
             });
         }
         catch { ec.Dispose(); throw; }

@@ -11,6 +11,7 @@ This project provides a FanControl plugin and documented EC fan commands for the
 - 一个双风扇共享 PWM 控制，范围 0–100%，量化步进约 0.392%。
 - 两个实际 RPM 传感器，默认将共享控制与风扇 0 配对。
 - 支持 FanControl 手动百分比及温度曲线。
+- 启动时同步持续未读的 EC 响应，避免残留字节阻止传感器加载；最多消费一个字节。
 - 禁用、正常退出和休眠事件时尝试恢复 EC 自动控制。
 - RPM 分字节采样先重试，允许 256 RPM 的高字节歧义；超出容差仅跳过该次读数，不停用手动控制。
 - 通信失败报错一次、停止继续发送 PWM 并尝试恢复自动；需刷新插件后重新控制。
@@ -39,6 +40,8 @@ F8965FDCE668692C3785AFA3559159F9A18287BC0D53ABB21902895A8ECF221B
 
 百分比读数是最近发送的量化命令，不是 EC 的 PWM 回读。自动控制时显示为空。设置命令没有 ACK，应结合实际 RPM 判断响应。
 
+v0.1.2 修复启动时 `EC PM2 output belongs to another transaction` 导致全部插件传感器消失的问题。持有互斥锁后，先等待输入空闲；若输出持续待取，给其他读取者 100 毫秒后最多消费一个残留字节，再检查 20 毫秒空闲并重新查询模式、RPM。检测到输入活动或输出再次出现就报错，不循环清空。此同步仅在初始化执行；正常事务仍拒绝意外输出。互斥锁不能协调不使用它的其他控制程序，运行时应避免并发访问 EC。
+
 v0.1.1 修复手动控制重复报错：EC 转速的高、低字节分开读取，转速变化可能造成采样不一致。插件先尝试三次一致读取，最后一次高字节只相差一级时允许两种组合相差 256 RPM 的近似读数；更大歧义显示为空，继续下一次采样，不锁死控制。容差用于读取同一采样的字节组合，不限制真实转速变化幅度。采样异常只在开始和恢复时记日志；握手超时、驱动或写入错误仍立即报一次并尝试恢复自动，后续宿主回调不再重复抛错或发送 PWM。
 
 禁用控制卡或从托盘正常退出会恢复自动。关闭窗口通常只是留在托盘，控制会继续。进程崩溃或强制结束无法保证恢复；可退出其他控制程序后使用 `control/fan.ps1 -Mode Auto`。手动 PWM 绕过 EC 普通温度曲线；低于约 50% 的起转/停转、长期负载、实际睡眠/唤醒及全 PWM 范围尚未实测。0% 和 100% 目前仅检查了编码。
@@ -56,7 +59,7 @@ pwsh -NoProfile -File .\plugin\test.ps1
 pwsh -NoProfile -File .\plugin\install.ps1 -FanControlDirectory 'D:\Apps\FanControl'
 ```
 
-输出为 `plugin/dist/FanControl.MechrevoPtl.dll`。`test.ps1` 的 20 项模拟测试不访问硬件；提供 `-FanControlDirectory` 后再验证两个真实宿主 `Control.Update()` 路径（仍使用假硬件），共 22 项。实机检查需要匹配的本机硬件和现有驱动，运行前退出 FanControl：
+输出为 `plugin/dist/FanControl.MechrevoPtl.dll`。`test.ps1` 的 26 项模拟测试不访问硬件；提供 `-FanControlDirectory` 后再验证两个真实宿主 `Control.Update()` 路径（仍使用假硬件），共 28 项。实机检查需要匹配的本机硬件和现有驱动，运行前退出 FanControl：
 
 ```powershell
 # 包含真实宿主手动控制循环的回归测试，不访问硬件。

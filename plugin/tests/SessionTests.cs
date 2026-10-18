@@ -165,6 +165,34 @@ public static class SessionTests
             Throws<RpmSampleUnavailableException>(() => RpmSampler.Read(_ => bytes.Dequeue(), 0));
             Throws<TimeoutException>(() => RpmSampler.Read(_ => throw new TimeoutException("handshake"), 0));
         });
+        Test("Startup sync leaves an idle port untouched", () => {
+            int discarded = EcStartupSync.Synchronize(() => 0, () => throw new Exception("unexpected read"), _ => throw new Exception("unexpected wait"));
+            Check(discarded == 0, "idle port consumed data");
+        });
+        Test("Startup sync clears one persistent response after the grace period", () => {
+            int reads = 0, elapsed = 0;
+            int discarded = EcStartupSync.Synchronize(() => (byte)(reads == 0 ? 1 : 0), () => { Check(elapsed >= 100, "read too soon"); reads++; return 42; }, ms => elapsed += ms);
+            Check(discarded == 1 && reads == 1 && elapsed == 120, "startup synchronization");
+        });
+        Test("Startup sync allows another reader to consume its response", () => {
+            int polls = 0;
+            int discarded = EcStartupSync.Synchronize(() => (byte)(++polls < 4 ? 1 : 0), () => throw new Exception("stole response"), _ => { });
+            Check(discarded == 0 && polls == 4, "natural response completion");
+        });
+        Test("Startup sync bounds input busy waiting without consuming output", () => {
+            int elapsed = 0;
+            Throws<TimeoutException>(() => EcStartupSync.Synchronize(() => 3, () => throw new Exception("busy read"), ms => elapsed += ms));
+            Check(elapsed == 1000, "busy wait was not bounded");
+        });
+        Test("Startup sync aborts on concurrent input activity", () => {
+            int polls = 0;
+            Throws<InvalidOperationException>(() => EcStartupSync.Synchronize(() => (byte)(++polls < 3 ? 1 : 3), () => throw new Exception("stole active response"), _ => { }));
+        });
+        Test("Startup sync never drains repeated incoming output", () => {
+            int reads = 0;
+            Throws<InvalidOperationException>(() => EcStartupSync.Synchronize(() => 1, () => { reads++; return 42; }, _ => { }));
+            Check(reads == 1, "unbounded drain");
+        });
         return passed.ToArray();
     }
 }
